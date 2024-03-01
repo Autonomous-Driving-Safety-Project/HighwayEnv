@@ -424,6 +424,13 @@ class AbstractEnv(gym.Env):
             else:
                 setattr(result, k, None)
         return result
+    
+    def get_ground_truth(self):
+        if self.road is None or self.vehicle is None:
+            raise NotImplementedError(
+                "The road and vehicle must be initialized in the environment implementation"
+            )
+        return self.road, self.vehicle
 
 
 class MultiAgentWrapper(Wrapper):
