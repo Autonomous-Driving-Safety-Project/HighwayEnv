@@ -327,7 +327,7 @@ class RoadGraphics(object):
                     v, surface, simulation=simulation_frequency, offscreen=offscreen
                 )
         for v in road.vehicles:
-            VehicleGraphics.display(v, surface, offscreen=offscreen)
+            VehicleGraphics.display(v, surface, offscreen=offscreen, label=True)
 
     @staticmethod
     def display_road_objects(
