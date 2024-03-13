@@ -431,6 +431,21 @@ class AbstractEnv(gym.Env):
                 "The road and vehicle must be initialized in the environment implementation"
             )
         return self.road, self.vehicle
+    
+    def get_metrics(self):
+        if self.road is None or self.vehicle is None:
+            raise NotImplementedError(
+                "The road and vehicle must be initialized in the environment implementation"
+            )
+        preceder, follower = self.road.neighbour_vehicles(self.vehicle, self.vehicle.lane_index)
+        s_ego,_ = self.vehicle.lane.local_coordinates(self.vehicle.position)
+        s_pre,_ = self.vehicle.lane.local_coordinates(preceder.position) if preceder is not None else (0,0)
+        s_fol,_ = self.vehicle.lane.local_coordinates(follower.position) if follower is not None else (0,0)
+        return {
+            "speed": self.vehicle.speed,
+            "TTC_front": (s_pre - s_ego - self.vehicle.LENGTH) / (self.vehicle.speed - preceder.speed) if preceder is not None and self.vehicle.speed - preceder.speed > 0 else np.inf,
+            "TTC_rear": (s_ego - s_fol - self.vehicle.LENGTH) / (follower.speed - self.vehicle.speed) if follower is not None and follower.speed - self.vehicle.speed > 0 else np.inf,
+        }
 
 
 class MultiAgentWrapper(Wrapper):
