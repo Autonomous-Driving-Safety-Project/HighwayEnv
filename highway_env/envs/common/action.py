@@ -10,6 +10,7 @@ from highway_env.utils import Vector
 from highway_env.vehicle.controller import MDPVehicle
 from highway_env.vehicle.dynamics import BicycleVehicle
 from highway_env.vehicle.kinematics import Vehicle
+from highway_env.vehicle.behavior import IDMVehicle
 
 if TYPE_CHECKING:
     from highway_env.envs.common.abstract import AbstractEnv
@@ -330,6 +331,61 @@ class MultiAgentAction(ActionType):
             ]
         )
 
+class IDMAction(ActionType):
+
+    """
+    An continuous action space for throttle and/or steering angle.
+
+    If both throttle and steering are enabled, they are set in this order: [throttle, steering]
+
+    The space intervals are always [-1, 1], but are mapped to throttle/steering intervals through configurations.
+    """
+
+    ACCELERATION_RANGE = (-5, 5.0)
+    """Acceleration range: [-x, x], in m/s²."""
+
+    STEERING_RANGE = (-np.pi / 4, np.pi / 4)
+    """Steering angle range: [-x, x], in rad."""
+
+    def __init__(
+        self,
+        env: "AbstractEnv",
+        speed_range: Optional[Tuple[float, float]] = None,
+        clip: bool = True,
+        **kwargs
+    ) -> None:
+        """
+        Create a continuous action space.
+
+        :param env: the environment
+        :param acceleration_range: the range of acceleration values [m/s²]
+        :param steering_range: the range of steering values [rad]
+        :param speed_range: the range of reachable speeds [m/s]
+        :param longitudinal: enable throttle control
+        :param lateral: enable steering control
+        :param dynamical: whether to simulate dynamics (i.e. friction) rather than kinematics
+        :param clip: clip action to the defined range
+        """
+        super().__init__(env)
+        self.clip = clip
+        self.size = 1
+        self.speed_range = speed_range if speed_range is not None else (0.0, 40.0)
+        self.last_action = np.zeros(self.size)
+
+    def space(self) -> spaces.Box:
+        return spaces.Box(*(self.speed_range), shape=(self.size,), dtype=np.float32)
+
+    @property
+    def vehicle_class(self) -> Callable:
+        return IDMVehicle
+
+    def get_action(self, action: np.ndarray):
+        return action
+
+    def act(self, action: np.ndarray) -> None:
+        action = self.get_action(action)
+        self.controlled_vehicle.target_speed = action
+        self.controlled_vehicle.act()
 
 def action_factory(env: "AbstractEnv", config: dict) -> ActionType:
     if config["type"] == "ContinuousAction":
@@ -340,5 +396,7 @@ def action_factory(env: "AbstractEnv", config: dict) -> ActionType:
         return DiscreteMetaAction(env, **config)
     elif config["type"] == "MultiAgentAction":
         return MultiAgentAction(env, **config)
+    elif config["type"] == "IDMAction":
+        return IDMAction(env, **config)
     else:
         raise ValueError("Unknown action type")

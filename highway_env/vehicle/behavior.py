@@ -101,6 +101,12 @@ class IDMVehicle(ControlledVehicle):
         """
         if self.crashed:
             return
+        action = self.get_action()
+        Vehicle.act(
+            self, action
+        )  # Skip ControlledVehicle.act(), or the command will be overriden.
+    
+    def get_action(self):
         action = {}
         # Lateral: MOBIL
         self.follow_road()
@@ -133,9 +139,7 @@ class IDMVehicle(ControlledVehicle):
         action["acceleration"] = np.clip(
             action["acceleration"], -self.ACC_MAX, self.ACC_MAX
         )
-        Vehicle.act(
-            self, action
-        )  # Skip ControlledVehicle.act(), or the command will be overriden.
+        return action
 
     def step(self, dt: float):
         """
