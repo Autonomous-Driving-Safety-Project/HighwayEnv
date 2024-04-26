@@ -62,6 +62,10 @@ class RoadObject(ABC):
         self.hit = False
         self.impact = np.zeros(self.position.shape)
 
+    @property
+    def id(self):
+        return id(self) % 114514
+    
     @classmethod
     def make_on_lane(
         cls,
@@ -205,7 +209,7 @@ class RoadObject(ABC):
         return self.direction.dot(other.position - self.position)
 
     def __str__(self):
-        return f"{self.__class__.__name__} #{id(self) % 1000}: at {self.position}"
+        return f"{self.__class__.__name__} #{self.id}: at {self.position}"
 
     def __repr__(self):
         return self.__str__()

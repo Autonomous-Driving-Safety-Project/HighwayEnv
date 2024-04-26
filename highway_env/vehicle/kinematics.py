@@ -262,7 +262,7 @@ class Vehicle(RoadObject):
 
     def __str__(self):
         return "{} #{}: {}".format(
-            self.__class__.__name__, id(self) % 1000, self.position
+            self.__class__.__name__, self.id, self.position
         )
 
     def __repr__(self):
